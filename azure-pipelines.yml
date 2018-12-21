@@ -1,0 +1,54 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+- feature/*
+- develop
+
+variables:
+  buildConfiguration: 'Release'
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+steps:
+- task: gittools.gitversion.gitversion-task.GitVersion@4
+  displayName: GitVersion
+
+- task: DeleteFiles@1
+  inputs: 
+    sourceFolder: $(Build.ArtifactStagingDirectory)
+    contents: '**/*.nupkg'
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet restore
+  inputs:
+    command: restore
+    noCache: true
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet build
+  inputs:
+    command: build
+    arguments: --configuration $(BuildConfiguration) -p:AssemblyVersion=$(GitVersion.AssemblySemVer) -p:FileVersion=$(GitVersion.AssemblySemFileVer) -p:InformationalVersion=$(GitVersion.InformationalVersion)
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet pack nuget
+  inputs:
+    command: pack
+    arguments: --configuration $(BuildConfiguration)
+    nobuild: true
+    versioningScheme: byEnvVar
+    versionEnvVar: GitVersion.NuGetVersionV2
+    searchPatternPack: '**/*.csproj'
+    outputDir: '$(Build.ArtifactStagingDirectory)\nuget'
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet push nuget
+  inputs:
+    command: push
+    searchPatternPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+    feedPublish: 'internal'
