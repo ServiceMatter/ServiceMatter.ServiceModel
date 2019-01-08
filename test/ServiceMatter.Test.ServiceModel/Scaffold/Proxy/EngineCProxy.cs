@@ -4,10 +4,10 @@ using ServiceMatter.ServiceModel.Configuration;
 
 namespace Service.Matter.Test.ServiceModel.Scaffold.Proxy
 {
-    public class EngineAProxy<TContext> : ProxyBase<IEngineA, TContext>, IEngineA
-        where TContext : class
+    public class EngineCProxy<TContext> : ProxyBase<IEngineC, TContext>, IEngineC
+       where TContext : class
     {
-        public EngineAProxy(IEngineA service, TContext context, ProxyContractBehavior<IEngineA, TContext> behavior) : base(service, context, behavior)
+        public EngineCProxy(IEngineC service, TContext context, ProxyContractBehavior<IEngineC, TContext> behavior) : base(service, context, behavior)
         {
         }
 
@@ -21,9 +21,6 @@ namespace Service.Matter.Test.ServiceModel.Scaffold.Proxy
             return Invoke(Service.OperationBb, request);
         }
 
-        public OperationCResultDto OperationCc(OperationCRequestDto request)
-        {
-            return Invoke(Service.OperationCc, request);
-        }
+     
     }
 }

@@ -4,7 +4,6 @@ using NSubstitute;
 
 namespace ServiceMatter.ServiceModel.Configuration
 {
-    //TODO overleg met team over voorkeur syntax (A<>.X, Is.A<>(), etcetera
 
     public static class A<T>
     {

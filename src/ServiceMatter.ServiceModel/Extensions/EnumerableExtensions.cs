@@ -6,15 +6,15 @@ namespace ServiceMatter.ServiceModel.Extensions
 {
     public static class EnumerableExtensions
     {
-        public static IEnumerable<T> DoForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+        public static void DoForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
         {
-            Debug.Assert(enumerable != null);
             Debug.Assert(action != null);
 
-            foreach (var item in enumerable)
+            if (enumeration == null) return;
+
+            foreach (T item in enumeration)
             {
                 action(item);
-                yield return item;
             }
         }
     }

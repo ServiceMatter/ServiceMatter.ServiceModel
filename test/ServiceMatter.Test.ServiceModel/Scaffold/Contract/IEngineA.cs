@@ -7,6 +7,7 @@ namespace Service.Matter.Test.ServiceModel.Scaffold.Contract
 
         OperationAResultDto OperationAa(OperationARequestDto request);
         OperationBResultDto OperationBb(OperationBRequestDto request);
+        OperationCResultDto OperationCc(OperationCRequestDto request);
     }
 
     public interface IEngineB
@@ -16,4 +17,10 @@ namespace Service.Matter.Test.ServiceModel.Scaffold.Contract
         Task<OperationBResultDto> OperationBbAsync(OperationBRequestDto request);
     }
 
+    public interface IEngineC
+    {
+
+        OperationAResultDto OperationAa(OperationARequestDto request);
+        OperationBResultDto OperationBb(OperationBRequestDto request);
+    }
 }
