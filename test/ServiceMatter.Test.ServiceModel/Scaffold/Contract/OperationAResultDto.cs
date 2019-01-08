@@ -2,5 +2,6 @@
 {
     public class OperationAResultDto
     {
+        public string Out { get; set; }
     }
 }

@@ -2,5 +2,7 @@
 {
     public class OperationBResultDto
     {
+        public string Out { get; set; }
     }
+
 }

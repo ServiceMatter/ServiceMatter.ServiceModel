@@ -1,6 +1,6 @@
 ﻿namespace Service.Matter.Test.ServiceModel.Scaffold.Contract
 {
-    public class OperationBRequestDto
+    public class OperationCRequestDto
     {
         public string In { get; set; }
     }

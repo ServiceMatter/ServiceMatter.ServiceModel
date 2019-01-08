@@ -500,6 +500,7 @@ namespace ServiceMatter.ServiceModel.Configuration
             }
 
             return null;
+            //throw new InvalidOperationException($"Call to unknown operation '{memberName}' with signature '{typeof(Func<T1,Task>).Name}' on contract '{typeof(IContract).FullName}'");
         }
 
         internal ProxyActionBehaviorAsync<IContract, TAmbientContext, T1, T2> Operation<T1, T2>(Func<T1, T2, Task> asyncAction, string memberName)
@@ -538,7 +539,7 @@ namespace ServiceMatter.ServiceModel.Configuration
             if (_operationConfigurations.TryGetValue(memberName, out var overloads))
             {
 
-                if (overloads.TryGetValue(typeof(Func<T1, Task>), out var behavior))
+                if (overloads.TryGetValue(typeof(Func<T1, Task<TResult>>), out var behavior))
                 {
                     return behavior as ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult>;
                 }

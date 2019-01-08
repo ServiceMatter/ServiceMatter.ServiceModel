@@ -1,10 +1,10 @@
-﻿using System;
+﻿using ServiceMatter.ServiceModel.Configuration;
+using ServiceMatter.ServiceModel.Exceptions;
+using ServiceMatter.ServiceModel.Extensions;
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using ServiceMatter.ServiceModel.Configuration;
-using ServiceMatter.ServiceModel.Exceptions;
-using ServiceMatter.ServiceModel.Extensions;
 
 namespace ServiceMatter.ServiceModel
 {
@@ -84,7 +84,7 @@ namespace ServiceMatter.ServiceModel
                 () => AuthenticateInvoke(operationBehaviour, Context),
                 () => AuthorizeInvoke(operationBehaviour, Context),
                 () => PreInvoke(operationBehaviour, Context),
-                () => operationBehaviour.Execute(Context, action),
+                () => InnerInvoke(operationBehaviour,Context, action),
                 () => PostInvoke(operationBehaviour, Context)
                 );
         }
@@ -97,7 +97,7 @@ namespace ServiceMatter.ServiceModel
                 () => AuthenticateInvoke(operationBehaviour, Context, a1),
                 () => AuthorizeInvoke(operationBehaviour, Context, a1),
                 () => PreInvoke(operationBehaviour, Context, a1),
-                () => operationBehaviour.Execute(Context, action, a1),
+                () => InnerInvoke(operationBehaviour,Context, action, a1),
                 () => PostInvoke(operationBehaviour, Context, a1)
                 );
 
@@ -127,7 +127,7 @@ namespace ServiceMatter.ServiceModel
                 () => AuthenticateInvoke(operationBehaviour, Context, a1),
                 () => AuthorizeInvoke(operationBehaviour, Context, a1),
                 () => PreInvoke(operationBehaviour, Context, a1),
-                () => operationBehaviour.Execute(Context, function, a1),
+                () => InnerInvoke(operationBehaviour,Context, function, a1),
                 (result) => PostInvoke(operationBehaviour, Context, result, a1)
                 );
         }
@@ -545,11 +545,12 @@ namespace ServiceMatter.ServiceModel
         {
             var operationBehaviour = ContractBehavior.Operation(asyncAction, serviceMemberName);
 
+            
             return ExecutePipelineAsync(
                 () => AuthenticateInvoke(operationBehaviour, Context),
                 () => AuthorizeInvoke(operationBehaviour, Context),
                 () => PreInvoke(operationBehaviour, Context),
-                () => operationBehaviour.Execute(Context, asyncAction),
+                () => InnerInvokeAsync(operationBehaviour,Context, asyncAction),
                 () => PostInvoke(operationBehaviour, Context)
                 );
         }
@@ -562,7 +563,7 @@ namespace ServiceMatter.ServiceModel
                 () => AuthenticateInvoke(operationBehaviour, Context, a1),
                 () => AuthorizeInvoke(operationBehaviour, Context, a1),
                 () => PreInvoke(operationBehaviour, Context, a1),
-                () => operationBehaviour.Execute(Context, asyncAction, a1),
+                () => InnerInvokeAsync(operationBehaviour,Context, asyncAction, a1),
                 () => PostInvoke(operationBehaviour, Context, a1)
             );
         }
@@ -575,15 +576,11 @@ namespace ServiceMatter.ServiceModel
                 () => AuthenticateInvoke(operationBehaviour, Context, a1, a2),
                 () => AuthorizeInvoke(operationBehaviour, Context, a1, a2),
                 () => PreInvoke(operationBehaviour, Context, a1, a2),
-                () => operationBehaviour.Execute(Context, asyncAction, a1, a2),
+                () => InnerInvokeAsync(operationBehaviour,Context, asyncAction, a1, a2),
                 () => PostInvoke(operationBehaviour, Context, a1, a2)
             );
         }
-
-        protected Task InvokeAsync<T1, T2>(Func<T1, T2, Task> function, T1 arg1, T2 arg2)
-        {
-            return function(arg1, arg2);
-        }
+      
 
         #endregion
 
@@ -813,6 +810,8 @@ namespace ServiceMatter.ServiceModel
             }
         }
 
+
+
         private void PreInvoke<T1>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1> operationBehavior, TAmbientContext context, T1 a1)
         {
             if (operationBehavior != null)
@@ -882,102 +881,23 @@ namespace ServiceMatter.ServiceModel
 
         #endregion
 
-        #region PostInvoke Async
-
-        #region PostInvoke Async Actions
-        private void PostInvoke(ProxyActionBehaviorAsync<IContract, TAmbientContext> operationBehavior, TAmbientContext context)
-        {
-            if (operationBehavior != null)
-            {
-                operationBehavior.PostInvoke(context);
-            }
-            else
-            {
-                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
-                {
-                    handler(context, null);
-                });
-            }
-        }
-
-        private void PostInvoke<T1>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1> operationBehavior, TAmbientContext context, T1 a1)
-        {
-            if (operationBehavior != null)
-            {
-                operationBehavior.PostInvoke(context, a1);
-            }
-            else
-            {
-                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
-                {
-                    handler(context, null, a1);
-                });
-            }
-
-        }
-
-        private void PostInvoke<T1, T2>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1, T2> operationBehavior, TAmbientContext context, T1 a1, T2 a2)
-        {
-            if (operationBehavior != null)
-            {
-                operationBehavior.PostInvoke(context, a1, a2);
-            }
-            else
-            {
-                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
-                {
-                    handler(context, null, a1, a2);
-                });
-            }
-
-        }
-
-        #endregion
-
-        #region PostInvoke Async Functions
-        private void PostInvoke<TResult>(ProxyFunctionBehaviorAsync<IContract, TAmbientContext, TResult> operationBehavior, TAmbientContext context, TResult result)
-        {
-            if (operationBehavior != null)
-            {
-                operationBehavior.PostInvoke(context, result);
-            }
-            else
-            {
-                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
-                {
-                    handler(context, null);
-                });
-            }
-        }
-
-        private void PostInvoke<T1, TResult>(ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> operationBehavior, TAmbientContext context, TResult result, T1 a1)
-        {
-            if (operationBehavior != null)
-            {
-                operationBehavior.PostInvoke(context, result, a1);
-            }
-            else
-            {
-                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
-                {
-                    handler(context, result, a1);
-                });
-            }
-
-        }
-        #endregion
-
-        #endregion
-
         #region InnerInvoke Async
 
         #region InnverInvoke Async Actions
 
-        private Task InnerInvokeAsync(TAmbientContext context, Func<Task> action)
+        private Task InnerInvokeAsync(ProxyActionBehaviorAsync<IContract, TAmbientContext> operationBehavior, TAmbientContext context, Func<Task> action)
         {
             try
             {
-                return action();
+                if (operationBehavior == null)
+                {
+                    return action();
+                }
+                else
+                {
+                    return operationBehavior.Execute(context, action);
+                }
+
             }
             catch (Exception e)
             {
@@ -988,11 +908,18 @@ namespace ServiceMatter.ServiceModel
         }
 
 
-        private Task InnerInvokeAsync<T1>(TAmbientContext context, Func<T1, Task> action, T1 a1)
+        private Task InnerInvokeAsync<T1>(ProxyActionBehaviorAsync<IContract, TAmbientContext,T1> operationBehavior, TAmbientContext context, Func<T1, Task> action, T1 a1)
         {
             try
             {
-                return action(a1);
+                if (operationBehavior == null)
+                {
+                    return action(a1);
+                }
+                else
+                {
+                    return operationBehavior.Execute(context, action,a1);
+                }
             }
             catch (Exception e)
             {
@@ -1002,11 +929,19 @@ namespace ServiceMatter.ServiceModel
 
         }
 
-        private Task InnerInvokeAsync<T1, T2>(TAmbientContext context, Func<T1, T2, Task> action, T1 a1, T2 a2)
+        private Task InnerInvokeAsync<T1, T2>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1,T2> operationBehavior, TAmbientContext context, Func<T1, T2, Task> action, T1 a1, T2 a2)
         {
             try
             {
-                return action(a1, a2);
+                if (operationBehavior == null)
+                {
+                    return action(a1,a2);
+                }
+                else
+                {
+                    return operationBehavior.Execute(context, action,a1,a2);
+                }
+
             }
             catch (Exception e)
             {
@@ -1025,18 +960,18 @@ namespace ServiceMatter.ServiceModel
         {
             try
             {
-                if (operationBehavior != null)
+                if (operationBehavior == null)
                 {
-                    return operationBehavior.Execute(context, func);
+                    return func();
                 }
                 else
                 {
-                    return func();
+                    return operationBehavior.Execute(context, func);
                 }
             }
             catch (Exception e)
             {
-                ContractBehavior.RaiseError("InnerInvoke", context, e);
+                ContractBehavior.RaiseError("InnerInvokeAsync", context, e);
                 throw new FaultException(e);
             }
 
@@ -1046,27 +981,136 @@ namespace ServiceMatter.ServiceModel
         {
             try
             {
-                if (operationBehavior != null)
+                if (operationBehavior == null)
                 {
-                    return operationBehavior.Execute(context, func, a1);
+                    return func(a1);
                 }
                 else
                 {
-                    return func(a1);
+                    return operationBehavior.Execute(context, func, a1);
                 }
             }
             catch (Exception e)
             {
-                ContractBehavior.RaiseError("InnerInvoke", context, e, a1);
+                ContractBehavior.RaiseError("InnerInvokeAsync", context, e, a1);
                 throw new FaultException(e);
             }
 
         }
 
+        private Task<TResult> InnerInvokeAsync<T1,T2, TResult>(ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1,T2, TResult> operationBehavior, TAmbientContext context, Func<T1,T2, Task<TResult>> func, T1 a1,T2 a2)
+        {
+            try
+            {
+                if (operationBehavior == null)
+                {
+                    return func(a1,a2);
+                }
+                else
+                {
+                    return operationBehavior.Execute(context, func, a1,a2);
+                }
+            }
+            catch (Exception e)
+            {
+                ContractBehavior.RaiseError("InnerInvokeAsync", context, e, a1,a2);
+                throw new FaultException(e);
+            }
+
+        }
 
         #endregion
 
         #endregion
+
+
+        #region PostInvoke Async
+
+        #region PostInvoke Async Actions
+        private void PostInvoke(ProxyActionBehaviorAsync<IContract, TAmbientContext> operationBehavior, TAmbientContext context)
+        {
+            if (operationBehavior == null)
+            {
+                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
+                {
+                    handler(context, null);
+                });
+            }
+            else
+            {
+                operationBehavior.PostInvoke(context);
+            }
+        }
+
+        private void PostInvoke<T1>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1> operationBehavior, TAmbientContext context, T1 a1)
+        {
+            if (operationBehavior == null)
+            {
+                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
+                {
+                    handler(context, null, a1);
+                });
+            }
+            else
+            {
+                operationBehavior.PostInvoke(context, a1);
+            }
+
+        }
+
+        private void PostInvoke<T1, T2>(ProxyActionBehaviorAsync<IContract, TAmbientContext, T1, T2> operationBehavior, TAmbientContext context, T1 a1, T2 a2)
+        {
+            if (operationBehavior == null)
+            {
+                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
+                {
+                    handler(context, null, a1, a2);
+                });
+            }
+            else
+            {
+                operationBehavior.PostInvoke(context, a1, a2);
+            }
+
+        }
+
+        #endregion
+
+        #region PostInvoke Async Functions
+        private void PostInvoke<TResult>(ProxyFunctionBehaviorAsync<IContract, TAmbientContext, TResult> operationBehavior, TAmbientContext context, TResult result)
+        {
+            if (operationBehavior == null)
+            {
+                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
+                {
+                    handler(context, null);
+                });
+            }
+            else
+            {
+                operationBehavior.PostInvoke(context, result);
+            }
+        }
+
+        private void PostInvoke<T1, TResult>(ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> operationBehavior, TAmbientContext context, TResult result, T1 a1)
+        {
+            if (operationBehavior == null)
+            {
+                ContractBehavior.PostInvokeHandlers.DoForEach((handler) =>
+                {
+                    handler(context, result, a1);
+                });
+            }
+            else
+            {
+                operationBehavior.PostInvoke(context, result, a1);
+            }
+
+        }
+        #endregion
+
+        #endregion
+
 
         #endregion
 

@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using ServiceMatter.ServiceModel.Delegates;
+﻿using ServiceMatter.ServiceModel.Delegates;
 using ServiceMatter.ServiceModel.Exceptions;
 using ServiceMatter.ServiceModel.Extensions;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ServiceMatter.ServiceModel.Configuration
 {
@@ -871,7 +871,6 @@ namespace ServiceMatter.ServiceModel.Configuration
             OnPostInvoke += handler;
             return this;
         }
-
         public ProxyFunctionBehavior<IContract, TAmbientContext, T1, TResult> AddInterceptor(FunctionWrapper<TAmbientContext, TResult, T1> interceptor)
         {
             OnIntercept += interceptor;
@@ -880,27 +879,32 @@ namespace ServiceMatter.ServiceModel.Configuration
 
         internal void Authenticate(TAmbientContext context, T1 a1)
         {
-            if (!VerifyAuthenticationHandlers(out var contractHandlers, out var operationHandler))
+            if (!VerifyAuthenticationHandlers(out var contractHandlers, out var operationHandlers))
             {
                 throw new AuthenticationException($"The authentication for operation '{_operationName}' on contract '{typeof(IContract).Name}' is not configured.");
             }
 
-            contractHandlers?
-                .DoForEach((handler) =>
+            if (contractHandlers != null)
+            {
+                foreach (var handler in contractHandlers)
                 {
                     handler(context, a1);
-                });
+                }
+            }
 
-            operationHandler?
-                .DoForEach((handler) =>
+            if (operationHandlers != null)
+            {
+                foreach (var handler in operationHandlers)
                 {
                     handler(context, a1);
-                });
+                }
+            }
+           
         }
 
         private bool VerifyAuthenticationHandlers(out ContractPipelineEventHandler<TAmbientContext>[] contractHandlers, out PipelineEventHandler<TAmbientContext, T1>[] operationHandlers)
         {
-            contractHandlers = _contract.AuthorizeHandlers;
+            contractHandlers = _contract.AuthenticateHandlers;
 
             operationHandlers = OnAuthenticate?.GetInvocationList().Cast<PipelineEventHandler<TAmbientContext, T1>>().ToArray();
 
@@ -909,18 +913,19 @@ namespace ServiceMatter.ServiceModel.Configuration
 
         internal void Authorize(TAmbientContext context, T1 a1)
         {
+            //TODO cache verification result and handlers
             if (!VerifyAuthorizationHandlers(out var contractHandlers, out var operationHandler))
             {
                 throw new AuthorizationException($"The Authorization for operation '{_operationName}' on contract '{typeof(IContract).Name}' is not configured.");
             }
 
-            contractHandlers?
+            contractHandlers
                 .DoForEach((handler) =>
                 {
                     handler(context, a1);
                 });
 
-            operationHandler?
+            operationHandler
                 .DoForEach((handler) =>
                 {
                     handler(context, a1);
@@ -1617,15 +1622,15 @@ namespace ServiceMatter.ServiceModel.Configuration
         {
         }
 
-        private FunctionWrapper<TAmbientContext, TResult> _outerWrapper;
+        private AsyncFunctionWrapper<TAmbientContext, TResult> _outerWrapper;
 
         internal PipelineEventHandler<TAmbientContext> OnAuthenticate;
         internal PipelineEventHandler<TAmbientContext> OnAuthorize;
         internal PipelineEventHandler<TAmbientContext> OnPreInvoke;
         internal PipelineResultEventHandler<TAmbientContext, TResult> OnPostInvoke;
-        internal FunctionWrapper<TAmbientContext, TResult> OnIntercept;
+        internal AsyncFunctionWrapper<TAmbientContext, TResult> OnIntercept;
 
-        private FunctionWrapper<TAmbientContext, TResult> OuterWrapper
+        private AsyncFunctionWrapper<TAmbientContext, TResult> OuterWrapper
         {
             get
             {
@@ -1637,8 +1642,8 @@ namespace ServiceMatter.ServiceModel.Configuration
 
                 _outerWrapper = (c, a) => a();
 
-                var interceptors = OnIntercept?.GetInvocationList().Cast<FunctionWrapper<TAmbientContext, TResult>>().ToArray()
-                        ?? new FunctionWrapper<TAmbientContext, TResult>[] { };
+                var interceptors = OnIntercept?.GetInvocationList().Cast<AsyncFunctionWrapper<TAmbientContext, TResult>>().ToArray()
+                        ?? new AsyncFunctionWrapper<TAmbientContext, TResult>[] { };
 
 
                 interceptors.DoForEach((wrapper) =>
@@ -1671,7 +1676,7 @@ namespace ServiceMatter.ServiceModel.Configuration
             OnPostInvoke += handler;
             return this;
         }
-        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, TResult> AddInterceptor(FunctionWrapper<TAmbientContext, TResult> interceptor)
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, TResult> AddInterceptor(AsyncFunctionWrapper<TAmbientContext, TResult> interceptor)
         {
             OnIntercept += interceptor;
             return this;
@@ -1799,6 +1804,13 @@ namespace ServiceMatter.ServiceModel.Configuration
             return await function();
         }
 
+        private AsyncFunctionWrapper<TAmbientContext, TResult> Wrap(AsyncFunctionWrapper<TAmbientContext, TResult> function, AsyncFunctionWrapper<TAmbientContext, TResult> wrapper)
+        {
+            AsyncFunctionWrapper<TAmbientContext, TResult> wrapped = (c, a) => wrapper(c, async () => await function(c, a));
+
+            return wrapped;
+        }
+
         private FunctionWrapper<TAmbientContext, TResult> Wrap(FunctionWrapper<TAmbientContext, TResult> function, FunctionWrapper<TAmbientContext, TResult> wrapper)
         {
             FunctionWrapper<TAmbientContext, TResult> wrapped = (c, a) => wrapper(c, () => function(c, a));
@@ -1820,11 +1832,11 @@ namespace ServiceMatter.ServiceModel.Configuration
         internal PipelineEventHandler<TAmbientContext, T1> OnAuthorize;
         internal PipelineEventHandler<TAmbientContext, T1> OnPreInvoke;
         internal PipelineResultEventHandler<TAmbientContext, TResult, T1> OnPostInvoke;
-        internal FunctionWrapper<TAmbientContext, TResult, T1> OnIntercept;
+        internal AsyncFunctionWrapper<TAmbientContext, TResult, T1> OnIntercept;
 
-        private FunctionWrapper<TAmbientContext, TResult, T1> _outerWrapper;
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1> _outerWrapper;
 
-        private FunctionWrapper<TAmbientContext, TResult, T1> OuterWrapper
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1> OuterWrapper
         {
             get
             {
@@ -1836,8 +1848,8 @@ namespace ServiceMatter.ServiceModel.Configuration
 
                 _outerWrapper = (c, a, p1) => a(p1);
 
-                var interceptors = OnIntercept?.GetInvocationList().Cast<FunctionWrapper<TAmbientContext, TResult, T1>>().ToArray()
-                        ?? new FunctionWrapper<TAmbientContext, TResult, T1>[] { };
+                var interceptors = OnIntercept?.GetInvocationList().Cast<AsyncFunctionWrapper<TAmbientContext, TResult, T1>>().ToArray()
+                        ?? new AsyncFunctionWrapper<TAmbientContext, TResult, T1>[] { };
 
 
                 interceptors.DoForEach((wrapper) =>
@@ -1870,7 +1882,7 @@ namespace ServiceMatter.ServiceModel.Configuration
             OnPostInvoke += handler;
             return this;
         }
-        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> AddInterceptor(FunctionWrapper<TAmbientContext, TResult, T1> interceptor)
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> AddInterceptor(AsyncFunctionWrapper<TAmbientContext, TResult, T1> interceptor)
         {
             OnIntercept += interceptor;
             return this;
@@ -1995,12 +2007,218 @@ namespace ServiceMatter.ServiceModel.Configuration
 
         internal async Task<TResult> Execute(TAmbientContext context, Func<T1, Task<TResult>> function, T1 a1)
         {
-            return await function(a1);
+            return await OuterWrapper(context,function,a1);
         }
+
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1> Wrap(AsyncFunctionWrapper<TAmbientContext, TResult, T1> function, AsyncFunctionWrapper<TAmbientContext, TResult, T1> wrapper)
+        {
+            AsyncFunctionWrapper<TAmbientContext, TResult, T1> wrapped = (c, a, p1) => wrapper(c, async x1 => await function(c, a, x1), p1);
+
+            return wrapped;
+        }
+
 
         private FunctionWrapper<TAmbientContext, TResult, T1> Wrap(FunctionWrapper<TAmbientContext, TResult, T1> function, FunctionWrapper<TAmbientContext, TResult, T1> wrapper)
         {
             FunctionWrapper<TAmbientContext, TResult, T1> wrapped = (c, a, p1) => wrapper(c, x1 => function(c, a, x1), p1);
+
+            return wrapped;
+        }
+
+    }
+
+    public class ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> : ProxyOperationBase<IContract, TAmbientContext>
+    where IContract : class where TAmbientContext : class
+    {
+        public ProxyFunctionBehaviorAsync(ProxyContractBehavior<IContract, TAmbientContext> contract, string operationName, Type operationType) : base(contract, operationName, operationType)
+        {
+        }
+
+        internal PipelineEventHandler<TAmbientContext, T1, T2> OnAuthenticate;
+        internal PipelineEventHandler<TAmbientContext, T1, T2> OnAuthorize;
+        internal PipelineEventHandler<TAmbientContext, T1, T2> OnPreInvoke;
+        internal PipelineResultEventHandler<TAmbientContext, TResult, T1, T2> OnPostInvoke;
+        internal FunctionWrapper<TAmbientContext, TResult, T1, T2> OnIntercept;
+
+        private FunctionWrapper<TAmbientContext, TResult, T1, T2> _outerWrapper;
+
+        private FunctionWrapper<TAmbientContext, TResult, T1, T2> OuterWrapper
+        {
+            get
+            {
+                if (_outerWrapper != null)
+                {
+                    return _outerWrapper;
+                }
+
+
+                _outerWrapper = (c, a, p1, p2) => a(p1, p2);
+
+                var interceptors = OnIntercept?.GetInvocationList().Cast<FunctionWrapper<TAmbientContext, TResult, T1, T2>>().ToArray()
+                        ?? new FunctionWrapper<TAmbientContext, TResult, T1, T2>[] { };
+
+
+                interceptors.DoForEach((wrapper) =>
+                {
+                    _outerWrapper = Wrap(_outerWrapper, wrapper);
+
+                });
+
+                return _outerWrapper;
+            }
+        }
+
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> AddAuthentication(PipelineEventHandler<TAmbientContext, T1, T2> handler)
+        {
+            OnAuthenticate += handler;
+            return this;
+        }
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> AddAuthorization(PipelineEventHandler<TAmbientContext, T1, T2> handler)
+        {
+            OnAuthorize += handler;
+            return this;
+        }
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> AddPreInvoke(PipelineEventHandler<TAmbientContext, T1, T2> handler)
+        {
+            OnPreInvoke += handler;
+            return this;
+        }
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> AddPostInvoke(PipelineResultEventHandler<TAmbientContext, TResult, T1, T2> handler)
+        {
+            OnPostInvoke += handler;
+            return this;
+        }
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, T2, TResult> AddInterceptor(FunctionWrapper<TAmbientContext, TResult, T1, T2> interceptor)
+        {
+            OnIntercept += interceptor;
+            return this;
+        }
+
+        internal void Authenticate(TAmbientContext context, T1 a1, T2 a2)
+        {
+            if (!VerifyAuthenticationHandlers(out var contractHandlers, out var operationHandler))
+            {
+                throw new AuthenticationException($"The authentication for operation '{_operationName}' on contract '{typeof(IContract).Name}' is not configured.");
+            }
+
+            contractHandlers?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+
+            operationHandler?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+        }
+
+        private bool VerifyAuthenticationHandlers(out ContractPipelineEventHandler<TAmbientContext>[] contractHandlers, out PipelineEventHandler<TAmbientContext, T1, T2>[] operationHandlers)
+        {
+            contractHandlers = _contract.OnAuthentication?.GetInvocationList().Cast<ContractPipelineEventHandler<TAmbientContext>>().ToArray();
+
+            operationHandlers = OnAuthenticate?.GetInvocationList().Cast<PipelineEventHandler<TAmbientContext, T1, T2>>().ToArray();
+
+            return contractHandlers?.Length > 0 || operationHandlers?.Length > 0;
+        }
+
+        internal void Authorize(TAmbientContext context, T1 a1, T2 a2)
+        {
+            if (!VerifyAuthorizationHandlers(out var contractHandlers, out var operationHandler))
+            {
+                throw new AuthorizationException($"The Authorization for operation '{_operationName}' on contract '{typeof(IContract).Name}' is not configured.");
+            }
+
+            contractHandlers?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+
+            operationHandler?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+        }
+
+        private bool VerifyAuthorizationHandlers(out ContractPipelineEventHandler<TAmbientContext>[] contractHandlers, out PipelineEventHandler<TAmbientContext, T1, T2>[] operationHandlers)
+        {
+            contractHandlers = _contract.OnAuthorization?.GetInvocationList().Cast<ContractPipelineEventHandler<TAmbientContext>>().ToArray();
+
+            operationHandlers = OnAuthorize?.GetInvocationList().Cast<PipelineEventHandler<TAmbientContext, T1, T2>>().ToArray();
+
+            return contractHandlers?.Length > 0 || operationHandlers?.Length > 0;
+        }
+
+        internal void PreInvoke(TAmbientContext context, T1 a1, T2 a2)
+        {
+            if (!VerifyPreInvokeHandlers(out var contractHandlers, out var operationHandlers))
+            {
+                return;
+            }
+
+            contractHandlers?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+
+            operationHandlers?
+                .DoForEach((handler) =>
+                {
+                    handler(context, a1, a2);
+                });
+        }
+
+        private bool VerifyPreInvokeHandlers(out ContractPipelineEventHandler<TAmbientContext>[] contractHandlers, out PipelineEventHandler<TAmbientContext, T1, T2>[] operationHandlers)
+        {
+            contractHandlers = _contract.PreInvokeHandlers;
+
+            operationHandlers = OnPreInvoke?.GetInvocationList().Cast<PipelineEventHandler<TAmbientContext, T1, T2>>().ToArray();
+
+            return contractHandlers?.Length > 0 || operationHandlers?.Length > 0;
+        }
+
+        internal void PostInvoke(TAmbientContext context, TResult r, T1 a1, T2 a2)
+        {
+            if (!VerifyPostInvokeHandlers(out var contractHandlers, out var operationHandler))
+            {
+                return;
+            }
+
+            contractHandlers?
+                .DoForEach((handler) =>
+                {
+                    handler(context, r, a1, a2);
+                });
+
+            operationHandler?
+                .DoForEach((handler) =>
+                {
+                    handler(context, r, a1, a2);
+                });
+        }
+
+        private bool VerifyPostInvokeHandlers(out PipelineResultEventHandler<TAmbientContext>[] contractHandlers, out PipelineResultEventHandler<TAmbientContext, TResult, T1, T2>[] operationHandlers)
+        {
+            contractHandlers = _contract.PostInvokeHandlers;
+
+            operationHandlers = OnPostInvoke?.GetInvocationList().Cast<PipelineResultEventHandler<TAmbientContext, TResult, T1, T2>>().ToArray();
+
+            return contractHandlers?.Length > 0 || operationHandlers?.Length > 0;
+        }
+
+
+        internal async Task<TResult> Execute(TAmbientContext context, Func<T1, T2, Task<TResult>> function, T1 a1, T2 a2)
+        {
+            return await function(a1, a2);
+        }
+
+        private FunctionWrapper<TAmbientContext, TResult, T1, T2> Wrap(FunctionWrapper<TAmbientContext, TResult, T1, T2> function, FunctionWrapper<TAmbientContext, TResult, T1, T2> wrapper)
+        {
+            FunctionWrapper<TAmbientContext, TResult, T1, T2> wrapped = (c, f, p1, p2) => wrapper(c, (x1, x2) => function(c, f, x1, x2), p1, p2);
 
             return wrapped;
         }
