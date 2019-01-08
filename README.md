@@ -24,6 +24,6 @@ Instantiation of components should be delegated to the IOC container of choice.
 
 ## Proxies
 
-- Proxyies can be automatically discovered by convention: If interface I`SomeName` is implemented by a class `SomeName`...Proxy then this class is used unless multiple candidates are found.
+- Proxies can be automatically discovered by convention: If interface I`SomeName` is implemented by a class `SomeName`...Proxy then this class is used unless multiple candidates are found.
 - A proxyname convention for technologies will be implemented. E.g. `SomeName`WcfProxy for a WCF type proxy or `SomeName`SfProxy for Service Fabric proxy or `SomeName`Proxy for plain class
 - 
