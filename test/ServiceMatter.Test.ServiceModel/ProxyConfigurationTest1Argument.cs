@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 
 namespace Service.Matter.Test.ServiceModel
 {
-    public class FluentApiConfigurationTest : IDisposable
+    public class ProxyConfigurationTest1Argument : IDisposable
     {
         private ITestOutputHelper _output { get; }
 
@@ -22,7 +22,7 @@ namespace Service.Matter.Test.ServiceModel
         private string _context;
         private ScaffoldingServiceFactory _sf;
 
-        public FluentApiConfigurationTest(ITestOutputHelper output)
+        public ProxyConfigurationTest1Argument(ITestOutputHelper output)
         {
             _output = output;
             _sw.Start();

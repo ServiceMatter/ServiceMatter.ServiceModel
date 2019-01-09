@@ -38,10 +38,10 @@ namespace Service.Matter.Test.ServiceModel
         }
 
 
-        [Fact]
+        
         public void Synchronous_handlers_void()
         {
-
+            //TODO VoidManager implementation
             var service = _sf.Create<IVoidManager>();
 
             service.NoArgs();

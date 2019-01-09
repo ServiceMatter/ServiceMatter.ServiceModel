@@ -59,6 +59,8 @@ namespace Service.Matter.Test.ServiceModel.Scaffolding.Host
                 return proxy as IContract;
             }
 
+            
+
             throw new InvalidOperationException($"Request for unknown service contract: '{contract.AssemblyQualifiedName}'");
         }
     }

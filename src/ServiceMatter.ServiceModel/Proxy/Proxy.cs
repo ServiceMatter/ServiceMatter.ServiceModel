@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ServiceMatter.ServiceModel.Configuration;
 
 namespace ServiceMatter.ServiceModel.Proxy
@@ -10,20 +11,20 @@ namespace ServiceMatter.ServiceModel.Proxy
     public class ProxyFactory<TAmbientContext>
         where TAmbientContext : class
     {
+        private readonly ProxyFactoryConfiguration<TAmbientContext> _config;
+
         public ProxyFactory(ProxyFactoryConfiguration<TAmbientContext> config)
         {
-            Config = config;
+            Debug.Assert(config != null);
+            _config = config;
         }
 
-        ProxyFactoryConfiguration<TAmbientContext> Config { get; set; }
+        private ProxyFactoryConfiguration<TAmbientContext> Config { get => _config; }
 
-        public T CreateProxy<T>(T service, TAmbientContext context) 
+        public T CreateProxy<T>(T service, TAmbientContext context)
             where T : class
         {
-
             return Config.CreateProxy(service, context);
-           
-
         }
     }
 
@@ -31,7 +32,6 @@ namespace ServiceMatter.ServiceModel.Proxy
     public interface IProxyConfigurationHelper<TInterface>
         where TInterface : class
     {
-
         IProxyConfigurationHelper<TInterface> RegisterAuthenticationHandler();
         IProxyConfigurationHelper<TInterface> RegisterAuthorizationHandler();
         IProxyConfigurationHelper<TInterface> RegisterPreInvokeHandler();
@@ -207,7 +207,6 @@ namespace ServiceMatter.ServiceModel.Proxy
         }
 
         #endregion
-
 
         #region Register Action Interceptors
 

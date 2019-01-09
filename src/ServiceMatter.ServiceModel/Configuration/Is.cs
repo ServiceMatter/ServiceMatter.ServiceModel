@@ -5,7 +5,7 @@ using NSubstitute;
 namespace ServiceMatter.ServiceModel.Configuration
 {
 
-    public static class A<T>
+    public static class An<T>
     {
         public static T X 
         {
@@ -22,6 +22,9 @@ namespace ServiceMatter.ServiceModel.Configuration
 
             }
         }
+
+        public static T o => X;
+        public static T Arg => X;
     }
 
     public static class Is

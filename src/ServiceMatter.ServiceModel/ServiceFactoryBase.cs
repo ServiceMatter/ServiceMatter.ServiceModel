@@ -26,19 +26,18 @@ namespace ServiceMatter.ServiceModel
         { }
 
 
-        private ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider, TContext context, ProxyFactoryConfiguration<TContext> proxyFactoryConfiguration)
+        protected ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider, TContext context, ProxyFactoryConfiguration<TContext> proxyFactoryConfiguration)
             : this(contextProvider, context, new ProxyFactory<TContext>(proxyFactoryConfiguration))
         {}
 
         private ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider, TContext context, ProxyFactory<TContext> proxyFactory)
         {
-            Debug.Assert(context == null || contextProvider == null,$"Eigther a {nameof(context)} or a {nameof(contextProvider)} must be provided. Both are null.");
+            Debug.Assert(context != null ^ contextProvider != null,$"Eigther a {nameof(context)} or a {nameof(contextProvider)} should be provided. Not both. Nor should both be null.");
 
             _context = context;
             _ambientContextProvider = contextProvider;
             ProxyFactory = proxyFactory;
         }
-
 
         public abstract IContract Create<IContract>() where IContract : class;
     }

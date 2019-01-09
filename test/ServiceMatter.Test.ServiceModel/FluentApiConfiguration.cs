@@ -188,7 +188,7 @@ namespace Service.Matter.Test.ServiceModel
         public void A_X_returns_a_DelegateMethod()
         {
 
-            Func<OperationARequestDto, OperationAResultDto> func = A<IEngineA>.X.OperationAa;
+            Func<OperationARequestDto, OperationAResultDto> func = An<IEngineA>.X.OperationAa;
 
             Assert.NotNull(func.Method);
             Assert.Equal(nameof(IEngineA.OperationAa), func.Method.Name);
@@ -199,15 +199,15 @@ namespace Service.Matter.Test.ServiceModel
         public void A_X_returns_a_ValueType()
         {
 
-            var x = A<int>.X;
+            var x = An<int>.X;
 
             Assert.Equal(default(int), x);
 
-            var b = A<string>.X;
+            var b = An<string>.X;
 
             Assert.Equal(default(string), b);
 
-            var c = A<float>.X;
+            var c = An<float>.X;
 
             Assert.Equal(default(float), c);
 

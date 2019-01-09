@@ -89,7 +89,7 @@ namespace ServiceMatter.ServiceModel
                 );
         }
 
-        protected void Invoke<T1>(T1 a1, Action<T1> action, [CallerMemberName] string serviceMemberName = null)
+        protected void Invoke<T1>( Action<T1> action, T1 a1, [CallerMemberName] string serviceMemberName = null)
         {
             var operationBehaviour = ContractBehavior.Operation(action, serviceMemberName);
 

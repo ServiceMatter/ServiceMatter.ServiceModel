@@ -27,7 +27,7 @@ namespace Service.Matter.Test.ServiceModel.Scaffolding.Proxy
 
         public void TwoArgs(ArgOne a1, ArgTwo a2)
         {
-            Invoke(Service.TwoArgs, a1, a2);
+            throw new NotImplementedException();
         }
 
         public void ThreeArgs(ArgOne a1, ArgTwo a2, ArgThree a3)
