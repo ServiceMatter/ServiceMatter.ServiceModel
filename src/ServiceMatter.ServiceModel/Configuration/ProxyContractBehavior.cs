@@ -145,7 +145,7 @@ namespace ServiceMatter.ServiceModel.Configuration
 
             var type = typeof(T);
 
-            if(!type.IsClass || !typeof(IContract).IsAssignableFrom(type))
+            if (!type.IsClass || !typeof(IContract).IsAssignableFrom(type))
             {
                 throw new ConfigurationException($"The type '{type.FullName}' configured as proxy for contract '{typeof(IContract).Name}' is an interface, a value type or does not implment the contract.");
             }
@@ -188,14 +188,14 @@ namespace ServiceMatter.ServiceModel.Configuration
             return operationConfig;
         }
 
-        public ProxyFunctionBehavior<IContract, TAmbientContext,T1,TResult> ForMethod<T1,TResult>(Expression<Action<IContract>> expression)
+        public ProxyFunctionBehavior<IContract, TAmbientContext, T1, TResult> ForMethod<T1, TResult>(Expression<Action<IContract>> expression)
         {
             if (!TryGetOperationInfo(expression, out var methodName, out var operationType))
             {
                 throw new ArgumentException($"The Expression Body must be a {nameof(MethodCallExpression)}. E.g: 'x => x.SomeOperation(args)'", nameof(expression));
             };
 
-            var operationConfig = EnsureFunctionConfig<T1,TResult>(methodName, operationType);
+            var operationConfig = EnsureFunctionConfig<T1, TResult>(methodName, operationType);
 
             return operationConfig;
         }
@@ -231,7 +231,7 @@ namespace ServiceMatter.ServiceModel.Configuration
             return operationConfig;
         }
 
-        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> ForOperation<T1, TResult>(Func<T1,Task<TResult>> function, T1 a1)
+        public ProxyFunctionBehaviorAsync<IContract, TAmbientContext, T1, TResult> ForOperation<T1, TResult>(Func<T1, Task<TResult>> function, T1 a1)
         {
             var operationConfig = EnsureAsyncFunctionConfig<T1, TResult>(function.Method.Name, function.GetType());
 
@@ -596,9 +596,9 @@ namespace ServiceMatter.ServiceModel.Configuration
                 return false;
             }
 
-            Type returnType = method.ReturnType == typeof(void) ? null : method.ReturnType;
+            var returnType = method.ReturnType == typeof(void) ? null : method.ReturnType;
             var typeParameters = method.GetParameters().Select(x => x.ParameterType).ToList();
-            Type genericType = GetGenericType(returnType == null, typeParameters.Count);
+            var genericType = GetGenericType(returnType == null, typeParameters.Count);
 
             if (returnType != null)
             {
