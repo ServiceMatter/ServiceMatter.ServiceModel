@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using ServiceMatter.ServiceModel.Configuration.Exceptions;
 using ServiceMatter.ServiceModel.Delegates;
 using ServiceMatter.ServiceModel.Extensions;
 
@@ -144,16 +145,16 @@ namespace ServiceMatter.ServiceModel.Configuration
 
             var type = typeof(T);
 
-            Debug.Assert(!type.IsInterface);
-            Debug.Assert(type.IsClass);
-            Debug.Assert(typeof(IContract).IsAssignableFrom(type));
+            if(!type.IsClass || !typeof(IContract).IsAssignableFrom(type))
+            {
+                throw new ConfigurationException($"The type '{type.FullName}' configured as proxy for contract '{typeof(IContract).Name}' is an interface, a value type or does not implment the contract.");
+            }
 
 
-            var constructor = type.GetConstructor(new[] { typeof(IContract), typeof(TAmbientContext), typeof(ProxyContractBehavior<IContract, TAmbientContext>) });
+            var argTypes = new[] { typeof(IContract), typeof(TAmbientContext), typeof(ProxyContractBehavior<IContract, TAmbientContext>) };
+            var constructor = type.GetConstructor(argTypes);
 
-            Debug.Assert(constructor != null);
-
-            _constructor = constructor;
+            _constructor = constructor ?? throw new ConfigurationException($"The type '{type.FullName}' configured as proxy for contract '{typeof(IContract).Name}' does not have an accessible constructor that takes 3 arguments of type '{argTypes[0].Name}', '{argTypes[1].Name}', and '{argTypes[2].Name}'");
 
             return this;
         }
