@@ -5,9 +5,6 @@ using ServiceMatter.ServiceModel.Configuration;
 
 namespace ServiceMatter.ServiceModel.Proxy
 {
-
-
-
     public class ProxyFactory<TAmbientContext>
         where TAmbientContext : class
     {

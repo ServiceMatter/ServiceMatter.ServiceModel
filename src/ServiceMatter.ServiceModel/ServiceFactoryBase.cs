@@ -1,6 +1,6 @@
-﻿using ServiceMatter.ServiceModel.Configuration;
+﻿using System.Diagnostics;
+using ServiceMatter.ServiceModel.Configuration;
 using ServiceMatter.ServiceModel.Proxy;
-using System.Diagnostics;
 
 namespace ServiceMatter.ServiceModel
 {
@@ -14,10 +14,10 @@ namespace ServiceMatter.ServiceModel
         protected TContext Context => _context ?? (_context = _ambientContextProvider?.Create());
 
         protected ServiceFactoryBase(TContext context) : this(null, context, ServiceModelConfiguration<TContext>.ProxyConfiguration)
-        {}
+        { }
 
-        protected ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider) : this(contextProvider, null,ServiceModelConfiguration<TContext>.ProxyConfiguration)
-        {}
+        protected ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider) : this(contextProvider, null, ServiceModelConfiguration<TContext>.ProxyConfiguration)
+        { }
 
         protected ServiceFactoryBase(TContext context, ProxyFactoryConfiguration<TContext> proxyFactoryConfiguration) : this(null, context, proxyFactoryConfiguration)
         { }
@@ -28,7 +28,7 @@ namespace ServiceMatter.ServiceModel
 
         protected ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider, TContext context, ProxyFactoryConfiguration<TContext> proxyFactoryConfiguration)
             : this(contextProvider, context, new ProxyFactory<TContext>(proxyFactoryConfiguration))
-        {}
+        { }
 
         private ServiceFactoryBase(IAmbientContextProvider<TContext> contextProvider, TContext context, ProxyFactory<TContext> proxyFactory)
         {

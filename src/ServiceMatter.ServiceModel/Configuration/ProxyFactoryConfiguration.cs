@@ -8,7 +8,8 @@ namespace ServiceMatter.ServiceModel.Configuration
         where TAmbientContext : class
     {
         private IDictionary<Type, object> _proxyConstructors = new Dictionary<Type, object>(100);
-        
+        private bool _noProxies = false;
+
 
         public ProxyContractBehavior<T, TAmbientContext> For<T>()
             where T : class
@@ -25,23 +26,34 @@ namespace ServiceMatter.ServiceModel.Configuration
             return (ProxyContractBehavior<T, TAmbientContext>)contractConfig;
         }
 
+        public void NoProxies()
+        {
+            _noProxies = true;
+        }
 
         internal T CreateProxy<T>(T service, TAmbientContext context)
             where T : class
         {
+            if (_noProxies)
+            {
+                return service;
+            }
+
             var type = typeof(T);
             if (_proxyConstructors.TryGetValue(type, out var contractConfig))
             {
                 var bhvr = contractConfig as ProxyContractBehavior<T, TAmbientContext>;
 
-                return bhvr.Create(service,context);
+                return bhvr.Create(service, context);
             }
 
             throw new InvalidOperationException($"No proxy was configured for contract '{type.Name}'. An explicit NoProxy() command must be issued thru the Fluent Config Api if a non proxied service instance is required.");
         }
 
+
+
     }
 
- 
+
 
 }
