@@ -4,9 +4,6 @@ using ServiceMatter.ServiceModel.Configuration;
 
 namespace ServiceMatter.ServiceModel.Proxy
 {
-
-
-
     public class ProxyFactory<TAmbientContext>
         where TAmbientContext : class
     {
@@ -20,10 +17,7 @@ namespace ServiceMatter.ServiceModel.Proxy
         public T CreateProxy<T>(T service, TAmbientContext context) 
             where T : class
         {
-
             return Config.CreateProxy(service, context);
-           
-
         }
     }
 
