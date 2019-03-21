@@ -139,14 +139,13 @@ namespace ServiceMatter.ServiceModel.Configuration
             return _factoryConfig;
         }
 
-        public ProxyContractBehavior<IContract, TAmbientContext> Use<T>()
+        public ProxyContractBehavior<IContract, TAmbientContext> Use<T>() where T : IContract
         {
 
             var type = typeof(T);
 
             Debug.Assert(!type.IsInterface);
             Debug.Assert(type.IsClass);
-            Debug.Assert(typeof(IContract).IsAssignableFrom(type));
 
 
             var constructor = type.GetConstructor(new[] { typeof(IContract), typeof(TAmbientContext), typeof(ProxyContractBehavior<IContract, TAmbientContext>) });
