@@ -1,11 +1,11 @@
-﻿using Service.Matter.Test.ServiceModel.Scaffolding.Contract;
-using Service.Matter.Test.ServiceModel.Scaffolding.Host;
-using Service.Matter.Test.ServiceModel.Scaffolding.Proxy;
-using ServiceMatter.ServiceModel.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Service.Matter.Test.ServiceModel.Scaffolding.Contract;
+using Service.Matter.Test.ServiceModel.Scaffolding.Host;
+using Service.Matter.Test.ServiceModel.Scaffolding.Proxy;
+using ServiceMatter.ServiceModel.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,7 +19,7 @@ namespace Service.Matter.Test.ServiceModel
         private List<(string, string, string, object, object, object)> _callList = new List<(string, string, string, object, object, object)>();
 
         private Stopwatch _sw = new Stopwatch();
-        private string _context;
+        private readonly string _context;
         private ScaffoldingServiceFactory _sf;
 
         public ProxyConfigurationTest0Arguments(ITestOutputHelper output)
@@ -38,7 +38,7 @@ namespace Service.Matter.Test.ServiceModel
         }
 
 
-        
+        [Fact(Skip = "Scaffold for IVoidManager not implemented yet")]
         public void Synchronous_handlers_void()
         {
             //TODO VoidManager implementation
@@ -46,26 +46,25 @@ namespace Service.Matter.Test.ServiceModel
 
             service.NoArgs();
 
-            AssertAllCalls( 0, "NoArgs", "IVoideManager", null, null);
+            AssertAllCalls(0, "NoArgs", "IVoidManager", null, null);
 
             var a1 = new ArgOne();
 
             service.OneArg(a1);
 
-            AssertAllCalls(10, "OneArgs", "IVoideManager", null, a1);
+            AssertAllCalls(10, "OneArgs", "IVoidManager", null, a1);
 
             a1 = new ArgOne();
             var a2 = new ArgTwo();
 
-            service.TwoArgs(a1,a2);
+            service.TwoArgs(a1, a2);
 
-            AssertAllCalls(10, "OneArgs", "IVoideManager", null, a1,a2);
-
+            AssertAllCalls(10, "OneArgs", "IVoidManager", null, a1, a2);
 
         }
 
 
-        private void AssertAllCalls(int startIndex, string methodName,  string interfaceName, object result, params object[] args)
+        private void AssertAllCalls(int startIndex, string methodName, string interfaceName, object result, params object[] args)
         {
             Assert.Equal(startIndex + 10, _callList.Count);
 
@@ -75,10 +74,10 @@ namespace Service.Matter.Test.ServiceModel
             AssertCall(_callList, startIndex + 3, (methodName, interfaceName, "Authorization", _context, args, null));
             AssertCall(_callList, startIndex + 4, ("AllOperations", interfaceName, "PreInvoke", _context, args, null));
             AssertCall(_callList, startIndex + 5, (methodName, interfaceName, "PreInvoke", _context, args, null));
-            AssertCall(_callList, startIndex + 6, (methodName, interfaceName, "Interceptor Before", _context,args, null));
+            AssertCall(_callList, startIndex + 6, (methodName, interfaceName, "Interceptor Before", _context, args, null));
             AssertCall(_callList, startIndex + 7, (methodName, interfaceName, "Interceptor After", _context, args, result));
             AssertCall(_callList, startIndex + 8, ("AllOperations", interfaceName, "PostInvoke", _context, args, result));
-            AssertCall(_callList, startIndex + 9, (methodName, interfaceName, "PostInvoke", _context,args, result));
+            AssertCall(_callList, startIndex + 9, (methodName, interfaceName, "PostInvoke", _context, args, result));
         }
 
         [Fact]
@@ -89,7 +88,7 @@ namespace Service.Matter.Test.ServiceModel
             var engineB = _sf.Create<IEngineB>();
 
 
-            OperationARequestDto inputA = new OperationARequestDto
+            var inputA = new OperationARequestDto
             {
                 In = Guid.NewGuid().ToString(),
             };
@@ -113,7 +112,7 @@ namespace Service.Matter.Test.ServiceModel
             AssertCall(_callList, 8, ("AllOperations", "IEngineB", "PostInvoke", _context, new object[] { inputA }, operationAaAsyncResult));
             AssertCall(_callList, 9, ("OperationAaAsync", "IEngineB", "PostInvoke", _context, inputA, operationAaAsyncResult));
 
-            OperationBRequestDto inputB = new OperationBRequestDto
+            var inputB = new OperationBRequestDto
             {
                 In = Guid.NewGuid().ToString(),
             };
@@ -139,7 +138,7 @@ namespace Service.Matter.Test.ServiceModel
             //Check whether minimal config works and does not produce null reference errors.
             var engineC = _sf.Create<IEngineC>();
 
-            OperationBRequestDto inputBC = new OperationBRequestDto
+            var inputBC = new OperationBRequestDto
             {
                 In = Guid.NewGuid().ToString(),
             };

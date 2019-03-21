@@ -1800,8 +1800,7 @@ namespace ServiceMatter.ServiceModel.Configuration
 
         internal async Task<TResult> Execute(TAmbientContext context, Func<Task<TResult>> function)
         {
-            //TODO wrapper
-            return await function();
+            return await OuterWrapper(context, function);
         }
 
         private AsyncFunctionWrapper<TAmbientContext, TResult> Wrap(AsyncFunctionWrapper<TAmbientContext, TResult> function, AsyncFunctionWrapper<TAmbientContext, TResult> wrapper)
@@ -2040,9 +2039,9 @@ namespace ServiceMatter.ServiceModel.Configuration
         internal PipelineResultEventHandler<TAmbientContext, TResult, T1, T2> OnPostInvoke;
         internal FunctionWrapper<TAmbientContext, TResult, T1, T2> OnIntercept;
 
-        private FunctionWrapper<TAmbientContext, TResult, T1, T2> _outerWrapper;
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> _outerWrapper;
 
-        private FunctionWrapper<TAmbientContext, TResult, T1, T2> OuterWrapper
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> OuterWrapper
         {
             get
             {
@@ -2054,8 +2053,8 @@ namespace ServiceMatter.ServiceModel.Configuration
 
                 _outerWrapper = (c, a, p1, p2) => a(p1, p2);
 
-                var interceptors = OnIntercept?.GetInvocationList().Cast<FunctionWrapper<TAmbientContext, TResult, T1, T2>>().ToArray()
-                        ?? new FunctionWrapper<TAmbientContext, TResult, T1, T2>[] { };
+                var interceptors = OnIntercept?.GetInvocationList().Cast<AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2>>().ToArray()
+                        ?? new AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2>[] { };
 
 
                 interceptors.DoForEach((wrapper) =>
@@ -2213,14 +2212,14 @@ namespace ServiceMatter.ServiceModel.Configuration
 
         internal async Task<TResult> Execute(TAmbientContext context, Func<T1, T2, Task<TResult>> function, T1 a1, T2 a2)
         {
-            return await function(a1, a2);
+            return await OuterWrapper(context,function,a1,a2);
         }
 
-        private FunctionWrapper<TAmbientContext, TResult, T1, T2> Wrap(FunctionWrapper<TAmbientContext, TResult, T1, T2> function, FunctionWrapper<TAmbientContext, TResult, T1, T2> wrapper)
+        private AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> Wrap(AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> function, AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> wrapper)
         {
-            FunctionWrapper<TAmbientContext, TResult, T1, T2> wrapped = (c, f, p1, p2) => wrapper(c, (x1, x2) => function(c, f, x1, x2), p1, p2);
+            AsyncFunctionWrapper<TAmbientContext, TResult, T1, T2> wrappedfunction = (c, f, p1, p2) => wrapper(c, (x1, x2) => function(c, f, x1, x2), p1, p2);
 
-            return wrapped;
+            return wrappedfunction;
         }
 
     }
